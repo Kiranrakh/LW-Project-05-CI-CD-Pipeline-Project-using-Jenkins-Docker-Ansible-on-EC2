@@ -1,0 +1,15 @@
+---
+- name: Deploy Docker Container
+  hosts: web
+  become: true
+  tasks:
+    - name: Load Docker Image
+      copy:
+        src=../app/flask-app.tar
+        dest=/home/ubuntu/flask-app.tar
+
+    - name: Load Image
+      shell: docker load < /home/ubuntu/flask-app.tar
+
+    - name: Run Container
+      shell: docker run -d -p 80:5000 flask-app
