@@ -3,13 +3,13 @@
   hosts: web
   become: true
   tasks:
-    - name: Load Docker Image
+    - name: Copy Docker Image to EC2
       copy:
-        src=../app/flask-app.tar
-        dest=/home/ubuntu/flask-app.tar
+        src: flask-app.tar
+        dest: /home/ubuntu/flask-app.tar
 
-    - name: Load Image
+    - name: Load Docker Image on EC2
       shell: docker load < /home/ubuntu/flask-app.tar
 
-    - name: Run Container
-      shell: docker run -d -p 80:5000 flask-app
+    - name: Run Flask Container
+      shell: docker run -d -p 80:5000 flask-cicd-app
