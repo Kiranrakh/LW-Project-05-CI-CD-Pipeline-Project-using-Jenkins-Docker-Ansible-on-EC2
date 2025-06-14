@@ -21,7 +21,7 @@ pipeline {
                 cd app
                 docker build -t $IMAGE_NAME .
                 docker save $IMAGE_NAME > $TAR_NAME
-                mv $TAR_NAME ../ansible/
+                mv $TAR_NAME ../ansible/files/
                 '''
             }
         }
