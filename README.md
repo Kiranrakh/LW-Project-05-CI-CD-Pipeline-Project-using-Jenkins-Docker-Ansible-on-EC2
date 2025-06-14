@@ -22,13 +22,23 @@ This project automates the deployment of a Flask application using Jenkins for C
 ## 📁 Project Structure
 
 ```
-LW-Project-05/
-├── Jenkinsfile
-├── app/
-│   └── requirements.txt, app.py, Dockerfile
+LW-Project-05-CI-CD-Pipeline-Project-using-Jenkins-Docker-Ansible-on-EC2/
 ├── ansible/
-    ├── inventory
-    └── deploy.yml
+│   ├── deploy.yml               # Ansible playbook to deploy Docker container on target EC2
+│   └── inventory                # Inventory file with target EC2 private IP
+│
+├── app/
+│   ├── static/
+│   │   └── style.css            # CSS styling for the Flask app
+│   ├── templates/
+│   │   └── index.html           # HTML template for rendering the Flask app
+│   ├── Dockerfile               # Dockerfile to build Flask app container
+│   ├── app.py                   # Main Flask application
+│   └── requirements.txt         # Python dependencies for the Flask app
+│
+├── Jenkinsfile                 # Jenkins pipeline-as-code to automate CI/CD
+├── README.md                   # Complete project documentation
+
 ```
 
 ---
