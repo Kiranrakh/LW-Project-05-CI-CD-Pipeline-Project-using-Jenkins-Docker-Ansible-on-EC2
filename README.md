@@ -1,25 +1,51 @@
-🚀 CI/CD Pipeline using Jenkins, Docker, and Ansible on EC2
+# 🚀 CI/CD Pipeline using Jenkins, Docker, and Ansible on EC2
 
-This project automates the deployment of a Flask application using Jenkins for CI/CD, Docker for containerization, and Ansible for remote deployment to a target EC2 instance.
+This project automates the deployment of a Flask application using Jenkins for CI/CD, Docker for containerization, and Ansible for deployment to a target EC2 instance.
 
-🔧 Prerequisites
+---
 
-2 EC2 Ubuntu 22.04 Instances:
+## 🔧 Prerequisites
 
-Jenkins EC2 (with Docker, Jenkins, Ansible)
+* Two EC2 Ubuntu 22.04 Instances:
 
-Target EC2 (Web server with Docker)
+  * **Jenkins EC2** (with Jenkins, Docker, Git, Ansible)
+  * **Target EC2** (only Docker installed)
+* Valid `.pem` key for SSH access
+* GitHub Repository with:
 
-A valid .pem key for SSH access
+  * `Jenkinsfile`
+  * `app/` folder (Flask app with Dockerfile)
+  * `ansible/` folder (inventory + deploy.yml)
 
-💻 Step-by-Step Setup and Commands
+---
 
-✅ Step 1: Connect to Jenkins EC2
+## 📁 Project Structure
 
+```
+LW-Project-05/
+├── Jenkinsfile
+├── app/
+│   └── requirements.txt, app.py, Dockerfile
+├── ansible/
+    ├── inventory
+    └── deploy.yml
+```
+
+---
+
+## 🧩 Step-by-Step Setup & Commands
+
+### ✅ Step 1: Connect to Jenkins EC2
+
+```bash
 ssh -i ~/Downloads/LW-Project.pem ubuntu@<JENKINS_PUBLIC_IP>
+```
 
-✅ Step 2: Install Jenkins, Docker, Git, and Ansible
+---
 
+### ✅ Step 2: Install Jenkins, Docker, Git, Ansible
+
+```bash
 sudo apt update
 sudo apt install openjdk-17-jdk -y
 wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc
@@ -27,96 +53,161 @@ wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr
 echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | \
 sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
 
-sudo apt update && sudo apt install jenkins -y
-sudo apt install docker.io git ansible -y
+sudo apt update
+sudo apt install jenkins docker.io git ansible -y
 
 sudo usermod -aG docker jenkins
 sudo systemctl restart docker
 sudo systemctl start jenkins
+```
 
-Now access Jenkins UI: http://<JENKINS_PUBLIC_IP>:8080
+➡️ Access Jenkins UI: `http://<JENKINS_PUBLIC_IP>:8080`
 
-✅ Step 3: Install Docker on Target EC2
+---
 
+### ✅ Step 3: Install Docker on Target EC2
+
+```bash
 ssh -i ~/Downloads/LW-Project.pem ubuntu@<TARGET_PUBLIC_IP>
 sudo apt update
 sudo apt install docker.io -y
 sudo systemctl start docker
 sudo systemctl enable docker
+```
 
-✅ Step 4: Copy .pem Key from Laptop to Jenkins EC2
+---
 
+### ✅ Step 4: Copy `.pem` from Laptop to Jenkins EC2
+
+```bash
 scp -i ~/Downloads/LW-Project.pem ~/Downloads/LW-Project.pem ubuntu@<JENKINS_PUBLIC_IP>:~
+```
 
-✅ Step 5: Move and Set Permissions on Jenkins EC2
+---
 
+### ✅ Step 5: Move Key to Jenkins and Set Permissions
+
+```bash
 sudo mkdir -p /var/lib/jenkins/.ssh
 sudo cp ~/LW-Project.pem /var/lib/jenkins/.ssh/
 sudo chown jenkins:jenkins /var/lib/jenkins/.ssh/LW-Project.pem
 sudo chmod 600 /var/lib/jenkins/.ssh/LW-Project.pem
+```
 
-✅ Step 6: Clone the GitHub Repository in Jenkins EC2
+---
 
+### ✅ Step 6: Clone GitHub Repo Inside Jenkins EC2
+
+```bash
 git clone https://github.com/Kiranrakh/LW-Project-05-CI-CD-Pipeline-Project-using-Jenkins-Docker-Ansible-on-EC2.git
 cd LW-Project-05-CI-CD-Pipeline-Project-using-Jenkins-Docker-Ansible-on-EC2
+```
 
-Make sure Jenkinsfile, app/, and ansible/ directories are present in the repo.
+---
 
-✅ Step 7: Set Up Jenkins Credentials
+### ✅ Step 7: Add SSH Credential in Jenkins
 
-Go to Jenkins UI
+1. Go to `Jenkins > Manage Jenkins > Credentials > Global > Add Credentials`
+2. Type: **SSH Username with private key**
+3. ID: `web-key`
+4. Username: `ubuntu`
+5. Paste the private key (`LW-Project.pem`) content
 
-Navigate to: Manage Jenkins > Credentials > Global > Add Credentials
+---
 
-Add type: SSH Username with private key
+### ✅ Step 8: Test Ansible Ping from Jenkins EC2
 
-ID: web-key, Username: ubuntu, Key: LW-Project.pem contents
-
-✅ Step 8: Test Ansible Inventory
-
+```bash
 cd ansible
 ansible -i inventory all -m ping
+```
 
-Accept host key manually if running for first time:
+✅ If first-time prompt appears:
 
+```bash
 ssh -i ~/.ssh/LW-Project.pem ubuntu@<TARGET_PRIVATE_IP>
+```
 
-✅ Step 9: Trigger Jenkins Pipeline
+Type `yes` to accept host key.
 
-Create new Pipeline Job in Jenkins UI
+---
 
-Use Git URL: https://github.com/Kiranrakh/LW-Project-05-CI-CD-Pipeline-Project-using-Jenkins-Docker-Ansible-on-EC2.git
+### ✅ Step 9: Create Pipeline Job in Jenkins
 
-Script Path: Jenkinsfile
+1. Go to Jenkins → `New Item`
+2. Enter name: `LW-Project-05-Test`
+3. Type: `Pipeline`
+4. Scroll down to “Pipeline” section:
 
-Build the pipeline
+   * Definition: `Pipeline script from SCM`
+   * SCM: `Git`
+   * URL: `https://github.com/Kiranrakh/LW-Project-05-CI-CD-Pipeline-Project-using-Jenkins-Docker-Ansible-on-EC2.git`
+   * Branch: `*/main`
+   * Script Path: `Jenkinsfile`
+5. Click `Save` and then `Build Now`
 
-✅ Jenkinsfile (Automated Commands Executed)
+---
 
+## 🛠️ Jenkinsfile Pipeline Actions (What It Does)
+
+```bash
 cd app
 docker build -t flask-cicd-app .
 docker save -o flask-app.tar flask-cicd-app
 mv flask-app.tar ../ansible/
 cd ../ansible
 ansible-playbook -i inventory deploy.yml
+```
 
-✅ Step 10: Verify Docker Container on Target EC2
+---
 
+## 📦 Ansible Playbook (`deploy.yml`) Tasks
+
+```yaml
+- Copy Docker image to remote
+- Load Docker image
+- Run container on port 80
+```
+
+---
+
+## 🔍 Verify on Target EC2
+
+```bash
 ssh -i ~/Downloads/LW-Project.pem ubuntu@<TARGET_PUBLIC_IP>
 sudo docker ps
+```
 
-✅ Final Result
+If container is running:
 
-Open the app in your browser:
+```bash
+curl http://localhost
+```
 
+Or open in browser:
+
+```
 http://<TARGET_PUBLIC_IP>
+```
 
-✅ Common Fixes
+---
 
-chmod 600 LW-Project.pem                                 # Fix permissions
-sudo docker rm -f $(docker ps -q)                        # Free up port 80
-ssh ubuntu@<TARGET_PRIVATE_IP>                           # Accept SSH host key
+## 🧹 Common Fixes & Commands
 
-✅ Done! 🎉
+```bash
+chmod 600 LW-Project.pem                             # Fix SSH key permission
+sudo docker rm -f $(docker ps -q)                   # Remove old container
+sudo netstat -tulpn | grep :80                      # Check port 80 usage
+```
 
-Your CI/CD Pipeline using Jenkins + Docker + Ansible is now fully functional!
+---
+
+## 🎉 Project Complete
+
+Your Flask App is now deployed via:
+
+* CI using **Jenkins**
+* Containerization with **Docker**
+* Deployment via **Ansible**
+* Running on **EC2**
+
