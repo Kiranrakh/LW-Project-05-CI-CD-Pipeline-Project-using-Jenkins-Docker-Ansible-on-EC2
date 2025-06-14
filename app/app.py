@@ -9,7 +9,7 @@ def home():
 
 @app.route('/health')
 def health():
-    return jsonify(status="UP", app="Flask CI/CD App", container=socket.gethostname())
+    return jsonify(status="UP", app="Flask CI-CD App", container=socket.gethostname())
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
